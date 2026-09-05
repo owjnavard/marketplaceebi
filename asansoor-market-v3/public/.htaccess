@@ -1,0 +1,54 @@
+# ── آسانسور مارکت | پیکربندی cPanel / Apache ───────────────────────
+# این فایل باید کنار index.html در public_html قرار بگیرد.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # درخواست‌های API را دست‌نخورده رد کن (برای بک‌اند لاراول)
+  RewriteRule ^api/ - [L]
+
+  # فایل و پوشه‌های واقعی مستقیم سرو شوند
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # بقیه مسیرها به اپلیکیشن تک‌صفحه‌ای برگردند
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# ── فشرده‌سازی ────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# ── کش ────────────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+  ExpiresActive On
+  # فایل‌های hash‌دار داخل assets تا یک سال کش شوند
+  <FilesMatch "\.(js|css|woff2|svg|png|jpg|jpeg|webp|avif|ico)$">
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable, max-age=31536000"
+  </FilesMatch>
+  # index.html هرگز کش نشود تا نسخه جدید بلافاصله دیده شود
+  <FilesMatch "^index\.html$">
+    ExpiresDefault "access plus 0 seconds"
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+AddType font/woff2 .woff2
+AddDefaultCharset UTF-8
+ErrorDocument 404 /index.html
